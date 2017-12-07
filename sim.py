@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # _*_ coding:utf-8 _*_
+#version:0.0.1
 import json
 from http import cookiejar
 from urllib.request import HTTPCookieProcessor, build_opener, Request
