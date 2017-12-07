@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 # _*_ coding:utf-8 _*_
-#version:0.0.1
+# version:0.0.1
 import json
 from http import cookiejar
 from urllib.request import HTTPCookieProcessor, build_opener, Request
 
 import time
+
+import sys
 
 baidu = "https://www.baidu.com"
 goods1 = 'http://www.supremenewyork.com/shop/4437/add'
@@ -18,6 +20,9 @@ check_post = "utf8=%E2%9C%93&authenticity_token=C5yjONx%2FOI5G%2FTGuLAO%2BEPB14v
 has_cookie = False
 file_name = "cookie"
 stock = "http://www.supremenewyork.com/mobile_stock.json?_="
+property = "http://www.supremenewyork.com/shop/"
+info = "http://1.surpreme.applinzi.com/"
+goods_info = ""
 
 
 # ssl._create_default_https_context = ssl._create_unverified_context
@@ -30,7 +35,14 @@ class shop(object):
         self.handler = HTTPCookieProcessor(self.cj)
         self.opener = build_opener(self.handler)
 
-    def getGoods(self, key):
+    def getInfo(self):
+        url = info
+        req = Request(url, method="GET")
+        response = self.opener.open(req)
+        response = response.read().decode('utf-8')
+        return response
+
+    def getGoods(self):
         url = stock + str(int(time.time()))
         req = Request(url, method="GET")
         req.add_header("User-Agent",
@@ -38,8 +50,32 @@ class shop(object):
         response = self.opener.open(req)
         response = response.read().decode('utf-8')
         print(response)
-        j = json.loads(response)
-        print(j['products_and_categories'])
+        j = json.loads(response)['products_and_categories']
+        for i in j:
+            print(i)
+            for k in j[i]:
+                name = k['name']
+                print(k)
+                # if 'The North Face' in name and 'Tee' in name:
+                #     print(k)
+
+
+    def getProperty(self, id):
+        url = property + str(id) + ".json"
+        print(url)
+        req = Request(url, method="GET")
+        response = self.opener.open(req)
+        response = response.read().decode('utf-8')
+        j = json.loads(response)['styles']
+        for i in j:
+            print(i)
+            # j = json.loads(response)['products_and_categories']
+            # for i in j:
+            #     print(i)
+            #     for k in j[i]:
+            #         name = k['name']
+            #         if 'The North Face' in name and 'Tee' in name:
+            #             print(k)
 
     def add_good(self, url, post):
         # post_data = urllib.urlencode(post)
@@ -68,7 +104,13 @@ class shop(object):
 
 if __name__ == '__main__':
     cls_shop = shop()
-    cls_shop.getGoods("sss")
-    # cls_shop.add_good(goods1, post_data1)
-    # cls_shop.add_good(goods2, post_data2)
-    # cls_shop.checkout(checkout, check_post)
+    response = cls_shop.getInfo()
+    j = json.loads(response)
+    if (response['isValid'] != 1):
+        sys.exit()
+    goods_info = response['goods']
+    cls_shop.getGoods()
+    cls_shop.getProperty(4686)
+    cls_shop.add_good(goods1, post_data1)
+    cls_shop.add_good(goods2, post_data2)
+    cls_shop.checkout(checkout, check_post)
