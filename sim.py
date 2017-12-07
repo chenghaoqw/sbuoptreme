@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # _*_ coding:utf-8 _*_
-import urllib
+import json
 from http import cookiejar
 from urllib.request import HTTPCookieProcessor, build_opener, Request
 
@@ -37,6 +37,8 @@ class shop(object):
         response = self.opener.open(req)
         response = response.read().decode('utf-8')
         print(response)
+        j = json.loads(response)
+        print(j['products_and_categories'])
 
     def add_good(self, url, post):
         # post_data = urllib.urlencode(post)
