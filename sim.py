@@ -3,6 +3,7 @@
 # version:0.0.1
 import json
 from http import cookiejar
+from urllib.parse import urlencode
 from urllib.request import HTTPCookieProcessor, build_opener, Request
 
 import time
@@ -10,6 +11,7 @@ import time
 import sys
 
 baidu = "https://www.baidu.com"
+goodsurl = "http://www.supremenewyork.com/shop/"
 goods1 = 'http://www.supremenewyork.com/shop/4437/add'
 goods2 = 'http://www.supremenewyork.com/shop/4632/add'
 post_data1 = "utf8=%E2%9C%93&style=16668&size=45067&commit=%E3%82%AB%E3%83%BC%E3%83%88%E3%81%AB%E5%85%A5%E3%82%8C%E3%82%8B"
@@ -22,7 +24,8 @@ file_name = "cookie"
 stock = "http://www.supremenewyork.com/mobile_stock.json?_="
 property = "http://www.supremenewyork.com/shop/"
 info = "http://1.surpreme.applinzi.com/"
-goods_info = ""
+goods_info = {}
+ids = {}
 
 
 # ssl._create_default_https_context = ssl._create_unverified_context
@@ -46,39 +49,55 @@ class shop(object):
         url = stock + str(int(time.time()))
         req = Request(url, method="GET")
         req.add_header("User-Agent",
-                       "Mozilla/5.0 (Linux;U;Android 2.3;en-us;Nexus One Build/FRF91)AppleWebKit/999+(KHTML, like Gecko)Version/4.0 Mobile Safari/999.9")
+                       "Mozilla/5.0 (iPhone; CPU iPhone OS 10_2 like Mac OS X) AppleWebKit/602.3.12 (KHTML, like Gecko) Mobile/14C92 MicroMessenger/6.5.9 NetType/WIFI Language/zh_CN")
         response = self.opener.open(req)
         response = response.read().decode('utf-8')
-        print(response)
         j = json.loads(response)['products_and_categories']
-        for i in j:
-            print(i)
-            for k in j[i]:
-                name = k['name']
-                print(k)
-                # if 'The North Face' in name and 'Tee' in name:
-                #     print(k)
+        for k in goods_info:  # 所有的想抢的货的信息
+            catAll = j[k]  # 每个种类的货的信息
+            for g in catAll:  # 每个货
+                for h in goods_info[k]:  # 每个要匹配的名字
+                    if h in g['name']:
+                        property = cls_shop.getProperty(g['id'])
+                        data = cls_shop.getProData(property)
+                        if (data != None):
+                            cls_shop.add_good(g['id'], data)
 
+    def getProData(self, data):
+        for pro in data:
+            size = pro['sizes']
+            for i in size:
+                if i['stock_level'] == 1:
+                    postDict = {
+                        'utf8': '✓',
+                        'style': pro['id'],
+                        'size': i['id'],
+                        'commit': 'カートに入れる'
+                    }
+                    return urlencode(postDict)
+        return None
 
     def getProperty(self, id):
         url = property + str(id) + ".json"
-        print(url)
         req = Request(url, method="GET")
         response = self.opener.open(req)
         response = response.read().decode('utf-8')
         j = json.loads(response)['styles']
-        for i in j:
-            print(i)
-            # j = json.loads(response)['products_and_categories']
-            # for i in j:
-            #     print(i)
-            #     for k in j[i]:
-            #         name = k['name']
-            #         if 'The North Face' in name and 'Tee' in name:
-            #             print(k)
+        return j
+        # for i in j:
+        #     print(i)
+        # j = json.loads(response)['products_and_categories']
+        # for i in j:
+        #     print(i)
+        #     for k in j[i]:
+        #         name = k['name']
+        #         if 'The North Face' in name and 'Tee' in name:
+        #             print(k)
 
-    def add_good(self, url, post):
+    def add_good(self, id, post):
         # post_data = urllib.urlencode(post)
+        url = goodsurl + str(id) + "/add"
+        print(url)
         req = Request(url, post.encode(encoding='UTF8'))
         response = self.opener.open(req)
         for item in self.cj:
@@ -106,11 +125,10 @@ if __name__ == '__main__':
     cls_shop = shop()
     response = cls_shop.getInfo()
     j = json.loads(response)
-    if (response['isValid'] != 1):
+    if (j['isValid'] != 1):
         sys.exit()
-    goods_info = response['goods']
+    goods = j['goods']
+    for cat in goods:
+        goods_info[cat['category']] = cat['name']
     cls_shop.getGoods()
-    cls_shop.getProperty(4686)
-    cls_shop.add_good(goods1, post_data1)
-    cls_shop.add_good(goods2, post_data2)
     cls_shop.checkout(checkout, check_post)
