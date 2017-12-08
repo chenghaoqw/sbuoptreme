@@ -2,10 +2,11 @@
 # _*_ coding:utf-8 _*_
 # version:0.0.1
 import json
+import os
 from http import cookiejar
 from urllib.parse import urlencode
 from urllib.request import HTTPCookieProcessor, build_opener, Request
-
+import tkinter
 import time
 
 import sys
@@ -28,6 +29,7 @@ goods_info = {}
 ids = {}
 
 
+
 # ssl._create_default_https_context = ssl._create_unverified_context
 
 class shop(object):
@@ -38,7 +40,9 @@ class shop(object):
         self.handler = HTTPCookieProcessor(self.cj)
         self.opener = build_opener(self.handler)
 
+
     def getInfo(self):
+        self.starttime = time.time()
         url = info
         req = Request(url, method="GET")
         response = self.opener.open(req)
@@ -52,16 +56,22 @@ class shop(object):
                        "Mozilla/5.0 (iPhone; CPU iPhone OS 10_2 like Mac OS X) AppleWebKit/602.3.12 (KHTML, like Gecko) Mobile/14C92 MicroMessenger/6.5.9 NetType/WIFI Language/zh_CN")
         response = self.opener.open(req)
         response = response.read().decode('utf-8')
+        t.insert(tkinter.END, str(time.time()-self.starttime)+"s cost\n")
+        print(response)
         j = json.loads(response)['products_and_categories']
         for k in goods_info:  # 所有的想抢的货的信息
             catAll = j[k]  # 每个种类的货的信息
             for g in catAll:  # 每个货
                 for h in goods_info[k]:  # 每个要匹配的名字
                     if h in g['name']:
+                        t.insert(tkinter.END, g['name'] + "\n")
                         property = cls_shop.getProperty(g['id'])
                         data = cls_shop.getProData(property)
                         if (data != None):
                             cls_shop.add_good(g['id'], data)
+                        else:
+                            t.insert(tkinter.END, "no stock" + "\n")
+                            t.insert(tkinter.END, "\n")
 
     def getProData(self, data):
         for pro in data:
@@ -97,8 +107,10 @@ class shop(object):
     def add_good(self, id, post):
         # post_data = urllib.urlencode(post)
         url = goodsurl + str(id) + "/add"
+        t.insert(tkinter.END, url + "\n")
+        t.insert(tkinter.END, post + "\n")
         print(url)
-        req = Request(url, post.encode(encoding='UTF8'))
+        req = Request(url, data=post.encode(encoding='UTF8'), headers={"Accept": ""})
         response = self.opener.open(req)
         for item in self.cj:
             print('Name = ' + item.name)
@@ -106,6 +118,9 @@ class shop(object):
         print("")
         self.cj.save(ignore_discard=True, ignore_expires=True)
         has_cookie = True
+        t.insert(tkinter.END, "success" + "\n")
+        t.insert(tkinter.END, str(time.time() - self.starttime) + "s cost\n")
+        t.insert(tkinter.END, "\n")
         # print response.read()
 
     def checkout(self, url, post):
@@ -117,12 +132,16 @@ class shop(object):
         for item in self.cj:
             print('Name = ' + item.name)
             print('Value = ' + item.value)
-        print("")
-        print(response.read().decode('utf-8'))
+        t.insert(tkinter.END, response.read().decode('utf-8'))
+        t.insert(tkinter.END, "\n")
+        t.insert(tkinter.END, "\n")
+        t.insert(tkinter.END, str(time.time() - self.starttime) + "s cost\n")
+        t.insert(tkinter.END, "end" + "\n")
 
 
-if __name__ == '__main__':
-    cls_shop = shop()
+def start():
+    t.insert(tkinter.END, "START" + "\n")
+    GLOBAL_START = time.time()
     response = cls_shop.getInfo()
     j = json.loads(response)
     if (j['isValid'] != 1):
@@ -131,4 +150,24 @@ if __name__ == '__main__':
     for cat in goods:
         goods_info[cat['category']] = cat['name']
     cls_shop.getGoods()
+    for item in cls_shop.cj:
+        t.insert(tkinter.END, 'Name = ' + item.name + "    ")
+        t.insert(tkinter.END, 'Value = ' + item.value + "s cost\n")
+    t.insert(tkinter.END, "\n")
     cls_shop.checkout(checkout, check_post)
+
+
+if __name__ == '__main__':
+    # 进入消息循环
+    cls_shop = shop()
+
+    root = tkinter.Tk()
+    t = tkinter.Text(root)
+    t.pack()
+    goBtn = tkinter.Button(text="Go!", command=start)
+    goBtn.pack()
+    root.mainloop()
+
+
+
+    # time.sleep(1000)
