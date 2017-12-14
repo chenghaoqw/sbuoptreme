@@ -2,21 +2,25 @@
 # _*_ coding:utf-8 _*_
 # version:0.0.1
 import json
-import os
+import sched
 from http import cookiejar
+
 from urllib.parse import urlencode
 from urllib.request import HTTPCookieProcessor, build_opener, Request
-import tkinter
+
+import datetime
+from apscheduler.schedulers.blocking import BlockingScheduler
+import datetime
 import time
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 import sys
 
+starttime = "";
 baidu = "https://www.baidu.com"
 goodsurl = "http://www.supremenewyork.com/shop/"
-goods1 = 'http://www.supremenewyork.com/shop/4437/add'
-goods2 = 'http://www.supremenewyork.com/shop/4632/add'
-post_data1 = "utf8=%E2%9C%93&style=16668&size=45067&commit=%E3%82%AB%E3%83%BC%E3%83%88%E3%81%AB%E5%85%A5%E3%82%8C%E3%82%8B"
-post_data2 = "utf8=%E2%9C%93&style=17486&size=48019&commit=%E3%82%AB%E3%83%BC%E3%83%88%E3%81%AB%E5%85%A5%E3%82%8C%E3%82%8B"
 cart = 'http://www.supremenewyork.com/shop/cart'
 checkout = 'https://www.supremenewyork.com/checkout'
 check_post = "utf8=%E2%9C%93&authenticity_token=C5yjONx%2FOI5G%2FTGuLAO%2BEPB14vjOfxe7jOr5B%2FvmK5JGATFTIahelu18RlEMjBRm%2BZQy%2BOE9CGTVunAGNN2N%2FA%3D%3D&credit_card%5Blast_name%5D=hu&credit_card%5Bfirst_name%5D=yang&order%5Bemail%5D=h924429615@gmail.com&order%5Btel%5D=09012592053&order%5Bbilling_state%5D=+%E6%9D%B1%E4%BA%AC%E9%83%BD&order%5Bbilling_city%5D=%E4%B8%9C%E4%BA%AC&order%5Bbilling_address%5D=%E6%9D%BF%E6%A9%8B%E5%8C%BA%E5%A4%A7%E8%B0%B7%E5%8F%A3%E5%8C%97%E7%94%BA18-3&order%5Bbilling_zip%5D=173-0031&same_as_billing_address=1&credit_card%5Btype%5D=cod&credit_card%5Bcnb%5D=4033920041674989&credit_card%5Bmonth%5D=11&credit_card%5Byear%5D=2022&credit_card%5Bvval%5D=909&order%5Bterms%5D=0&order%5Bterms%5D=1&hpcvv=&commit=%E8%B3%BC%E5%85%A5%E3%81%99%E3%82%8B"
@@ -24,10 +28,10 @@ has_cookie = False
 file_name = "cookie"
 stock = "http://www.supremenewyork.com/mobile_stock.json?_="
 property = "http://www.supremenewyork.com/shop/"
-info = "http://1.surpreme.applinzi.com/"
+info = "http://1.surpreme.applinzi.com/3"
 goods_info = {}
 ids = {}
-
+isHave = False
 
 
 # ssl._create_default_https_context = ssl._create_unverified_context
@@ -40,9 +44,8 @@ class shop(object):
         self.handler = HTTPCookieProcessor(self.cj)
         self.opener = build_opener(self.handler)
 
-
     def getInfo(self):
-        self.starttime = time.time()
+        print("Start")
         url = info
         req = Request(url, method="GET")
         response = self.opener.open(req)
@@ -50,28 +53,31 @@ class shop(object):
         return response
 
     def getGoods(self):
+        self.starttime = time.time()
         url = stock + str(int(time.time()))
         req = Request(url, method="GET")
         req.add_header("User-Agent",
                        "Mozilla/5.0 (iPhone; CPU iPhone OS 10_2 like Mac OS X) AppleWebKit/602.3.12 (KHTML, like Gecko) Mobile/14C92 MicroMessenger/6.5.9 NetType/WIFI Language/zh_CN")
         response = self.opener.open(req)
         response = response.read().decode('utf-8')
-        t.insert(tkinter.END, str(time.time()-self.starttime)+"s cost\n")
-        print(response)
+        print(str(time.time() - self.starttime) + "s cost")
         j = json.loads(response)['products_and_categories']
         for k in goods_info:  # 所有的想抢的货的信息
             catAll = j[k]  # 每个种类的货的信息
             for g in catAll:  # 每个货
                 for h in goods_info[k]:  # 每个要匹配的名字
                     if h in g['name']:
-                        t.insert(tkinter.END, g['name'] + "\n")
+                        print(g['name'])
                         property = cls_shop.getProperty(g['id'])
                         data = cls_shop.getProData(property)
                         if (data != None):
-                            cls_shop.add_good(g['id'], data)
+                            return cls_shop.add_good(g['id'], data)
                         else:
-                            t.insert(tkinter.END, "no stock" + "\n")
-                            t.insert(tkinter.END, "\n")
+                            print("no stock")
+                            print()
+                            print()
+
+        return False
 
     def getProData(self, data):
         for pro in data:
@@ -107,20 +113,19 @@ class shop(object):
     def add_good(self, id, post):
         # post_data = urllib.urlencode(post)
         url = goodsurl + str(id) + "/add"
-        t.insert(tkinter.END, url + "\n")
-        t.insert(tkinter.END, post + "\n")
         print(url)
-        req = Request(url, data=post.encode(encoding='UTF8'), headers={"Accept": ""})
+        print(post)
+        req = Request(url, post.encode(encoding='UTF8'))
         response = self.opener.open(req)
         for item in self.cj:
             print('Name = ' + item.name)
             print('Value = ' + item.value)
-        print("")
         self.cj.save(ignore_discard=True, ignore_expires=True)
         has_cookie = True
-        t.insert(tkinter.END, "success" + "\n")
-        t.insert(tkinter.END, str(time.time() - self.starttime) + "s cost\n")
-        t.insert(tkinter.END, "\n")
+        print("success")
+        print(str(time.time() - self.starttime) + "s cost")
+        print()
+        return True
         # print response.read()
 
     def checkout(self, url, post):
@@ -132,42 +137,44 @@ class shop(object):
         for item in self.cj:
             print('Name = ' + item.name)
             print('Value = ' + item.value)
-        t.insert(tkinter.END, response.read().decode('utf-8'))
-        t.insert(tkinter.END, "\n")
-        t.insert(tkinter.END, "\n")
-        t.insert(tkinter.END, str(time.time() - self.starttime) + "s cost\n")
-        t.insert(tkinter.END, "end" + "\n")
+        print("")
+        print(response.read().decode('utf-8'))
+        print(str(time.time() - self.starttime) + "s cost")
+        print("end")
 
 
-def start():
-    t.insert(tkinter.END, "START" + "\n")
-    GLOBAL_START = time.time()
+def alive():
+    delta = datetime.datetime.strptime(starttime, '%Y-%m-%d %H:%M:%S') - datetime.datetime.now()
+    print('I am alive, left %s' % delta)
+    print('now is %s' % datetime.datetime.now())
+    print(goods_info)
+    print()
+
+
+def start_bot():
+    if cls_shop.getGoods():
+        cls_shop.checkout(checkout, check_post)
+    else:
+        start_bot()
+
+
+if __name__ == '__main__':
+    cls_shop = shop()
     response = cls_shop.getInfo()
+    print(response)
     j = json.loads(response)
     if (j['isValid'] != 1):
         sys.exit()
     goods = j['goods']
+    # starttime = j['time']
+    starttime = '2017-12-14 14:05:00'
     for cat in goods:
         goods_info[cat['category']] = cat['name']
-    cls_shop.getGoods()
-    for item in cls_shop.cj:
-        t.insert(tkinter.END, 'Name = ' + item.name + "    ")
-        t.insert(tkinter.END, 'Value = ' + item.value + "s cost\n")
-    t.insert(tkinter.END, "\n")
-    cls_shop.checkout(checkout, check_post)
 
+    sched = BlockingScheduler()
 
-if __name__ == '__main__':
-    # 进入消息循环
-    cls_shop = shop()
-
-    root = tkinter.Tk()
-    t = tkinter.Text(root)
-    t.pack()
-    goBtn = tkinter.Button(text="Go!", command=start)
-    goBtn.pack()
-    root.mainloop()
-
-
-
-    # time.sleep(1000)
+    sched.add_job(alive, 'cron', second='*/5',
+                  end_date=datetime.datetime.strptime(starttime, '%Y-%m-%d %H:%M:%S') - datetime.timedelta(seconds=6))
+    sched.add_job(start_bot, 'cron', second='*/5', id='my_job2',
+                  start_date=datetime.datetime.strptime(starttime, '%Y-%m-%d %H:%M:%S'))
+    sched.start()
