@@ -10,6 +10,7 @@ from urllib.request import HTTPCookieProcessor, build_opener, Request
 
 import datetime
 from apscheduler.schedulers.blocking import BlockingScheduler
+from apscheduler.triggers.cron import CronTrigger
 import datetime
 import time
 import ssl
@@ -28,7 +29,8 @@ has_cookie = False
 file_name = "cookie"
 stock = "http://www.supremenewyork.com/mobile_stock.json?_="
 property = "http://www.supremenewyork.com/shop/"
-info = "http://1.surpreme.applinzi.com/3"
+info = "http://1.surpreme.applinzi.com/1"
+upload_url = "http://surphp.applinzi.com/upload.php"
 goods_info = {}
 ids = {}
 isHave = False
@@ -62,6 +64,7 @@ class shop(object):
         response = response.read().decode('utf-8')
         print(str(time.time() - self.starttime) + "s cost")
         j = json.loads(response)['products_and_categories']
+        print(j)
         for k in goods_info:  # 所有的想抢的货的信息
             catAll = j[k]  # 每个种类的货的信息
             for g in catAll:  # 每个货
@@ -142,6 +145,11 @@ class shop(object):
         print(str(time.time() - self.starttime) + "s cost")
         print("end")
 
+    def upload(self, url, post):
+        req = Request(url, post)
+        response = self.opener.open(req)
+        print(response.read().decode('utf-8'))
+
 
 def alive():
     delta = datetime.datetime.strptime(starttime, '%Y-%m-%d %H:%M:%S') - datetime.datetime.now()
@@ -156,9 +164,22 @@ def start_bot():
         cls_shop.checkout(checkout, check_post)
     else:
         start_bot()
+        # bot.remove()
+        # thread.shutdown(wait=False)
+        # else:
+        # bot.remove()
+        # thread.shutdown(wait=False)y
+        # files = {'myFile': ('1.jpg', f1)}
+        # cls_shop.upload(upload_url, files)
+
+
+    # def cprint(print_info):
+    #     print_info = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + "  " + print_info + "\n"
+    # f1.write(print_info)
 
 
 if __name__ == '__main__':
+
     cls_shop = shop()
     response = cls_shop.getInfo()
     print(response)
@@ -166,15 +187,20 @@ if __name__ == '__main__':
     if (j['isValid'] != 1):
         sys.exit()
     goods = j['goods']
-    # starttime = j['time']
-    starttime = '2017-12-14 14:05:00'
+    starttime = j['time']
+    # starttime = '2017-12-14 11:59:00'
+    # f1 = open('1' + starttime, 'rb')
     for cat in goods:
         goods_info[cat['category']] = cat['name']
-
-    sched = BlockingScheduler()
-
-    sched.add_job(alive, 'cron', second='*/5',
-                  end_date=datetime.datetime.strptime(starttime, '%Y-%m-%d %H:%M:%S') - datetime.timedelta(seconds=6))
-    sched.add_job(start_bot, 'cron', second='*/5', id='my_job2',
-                  start_date=datetime.datetime.strptime(starttime, '%Y-%m-%d %H:%M:%S'))
-    sched.start()
+    print(goods_info)
+    start_bot()
+    # thread = BlockingScheduler()
+    #
+    # alive = thread.add_job(alive, 'cron', second='*/5', id='alive',
+    #                        end_date=datetime.datetime.strptime(starttime, '%Y-%m-%d %H:%M:%S') - datetime.timedelta(
+    #                            seconds=6))
+    # bot = thread.add_job(start_bot, 'cron', id='bot', max_instances=10,
+    #                      start_date=datetime.datetime.strptime(starttime, '%Y-%m-%d %H:%M:%S'))
+    # thread.start()
+    # files = {'myFile': f1}
+    # cls_shop.upload(upload_url, str(files).encode('utf-8'))
