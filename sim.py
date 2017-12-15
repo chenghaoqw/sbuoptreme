@@ -167,7 +167,8 @@ def start_bot():
         cls_shop.checkout(checkout, check_post)
         bot.remove()
         thread.shutdown(wait=False)
-        files = {'myFile': (index + "__" + datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ".txt", open(file_name, 'r+'))}
+        files = {'myFile': (
+        index + "__" + datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ".txt", open(file_name, 'r+'))}
         cls_shop.upload(upload_url, files=files)
         # else:
         #     bot.remove()
@@ -175,7 +176,8 @@ def start_bot():
 
 
 if __name__ == '__main__':
-    index = os.path.basename(sys.argv[0])[-1]
+    index = "5"
+    info = "http://1.surpreme.applinzi.com/" + index
     print(index)
     cls_shop = shop()
     response = cls_shop.getInfo()
