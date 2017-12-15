@@ -122,9 +122,9 @@ class shop(object):
         print(post)
         req = Request(url, post.encode(encoding='UTF8'))
         response = self.opener.open(req)
-        for item in self.cj:
-            print('Name = ' + item.name)
-            print('Value = ' + item.value)
+        # for item in self.cj:
+        #     print('Name = ' + item.name)
+        #     print('Value = ' + item.value)
         self.cj.save(ignore_discard=True, ignore_expires=True)
         has_cookie = True
         print("success")
@@ -168,7 +168,7 @@ def start_bot():
         bot.remove()
         thread.shutdown(wait=False)
         files = {'myFile': (
-            index + "__" + datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ".txt", open(file_name, 'r+'))}
+            index + "__" + datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ".txt", open(upload_file_name, 'r+'))}
         cls_shop.upload(upload_url, files=files)
         # else:
         #     bot.remove()
@@ -182,7 +182,7 @@ if __name__ == '__main__':
     cls_shop = shop()
     response = cls_shop.getInfo()
     j = json.loads(response)
-    file_name = index
+    upload_file_name = index
     file = open(file_name, 'w+')
     print(j)
     if (j['isValid'] != 1):
