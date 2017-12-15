@@ -167,7 +167,7 @@ def start_bot():
         cls_shop.checkout(checkout, check_post)
         bot.remove()
         thread.shutdown(wait=False)
-        files = {'myFile': (index + "__" + datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ".txt", file)}
+        files = {'myFile': (index + "__" + datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ".txt", open(file_name, 'r+'))}
         cls_shop.upload(upload_url, files=files)
         # else:
         #     bot.remove()
@@ -186,8 +186,7 @@ if __name__ == '__main__':
     if (j['isValid'] != 1):
         sys.exit()
     goods = j['goods']
-    # check_post = str(j['commit'])
-    check_post = ""
+    check_post = str(j['commit'])
     print(check_post)
     starttime = j['time']
     # starttime = '2017-12-14 23:46:00'
