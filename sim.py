@@ -3,11 +3,13 @@
 # version:0.0.1
 import json
 import os
+import re
 import sched
 from http import cookiejar
 from urllib import request
 
 from urllib.parse import urlencode
+from urllib.parse import quote
 from urllib.request import HTTPCookieProcessor, build_opener, Request
 
 import datetime
@@ -27,7 +29,8 @@ starttime = ""
 baidu = "https://www.baidu.com"
 goodsurl = "http://www.supremenewyork.com/shop/"
 cart = 'http://www.supremenewyork.com/shop/cart'
-checkout = 'https://www.supremenewyork.com/checkout.json'
+checkout_url = 'https://www.supremenewyork.com/checkout'
+checkout_json__url = 'https://www.supremenewyork.com/checkout'
 check_post = "utf8=%E2%9C%93&authenticity_token=C5yjONx%2FOI5G%2FTGuLAO%2BEPB14vjOfxe7jOr5B%2FvmK5JGATFTIahelu18RlEMjBRm%2BZQy%2BOE9CGTVunAGNN2N%2FA%3D%3D&credit_card%5Blast_name%5D=hu&credit_card%5Bfirst_name%5D=yang&order%5Bemail%5D=h924429615@gmail.com&order%5Btel%5D=09012592053&order%5Bbilling_state%5D=+%E6%9D%B1%E4%BA%AC%E9%83%BD&order%5Bbilling_city%5D=%E4%B8%9C%E4%BA%AC&order%5Bbilling_address%5D=%E6%9D%BF%E6%A9%8B%E5%8C%BA%E5%A4%A7%E8%B0%B7%E5%8F%A3%E5%8C%97%E7%94%BA18-3&order%5Bbilling_zip%5D=173-0031&same_as_billing_address=1&credit_card%5Btype%5D=cod&credit_card%5Bcnb%5D=4033920041674989&credit_card%5Bmonth%5D=11&credit_card%5Byear%5D=2022&credit_card%5Bvval%5D=909&order%5Bterms%5D=0&order%5Bterms%5D=1&hpcvv=&commit=%E8%B3%BC%E5%85%A5%E3%81%99%E3%82%8B"
 has_cookie = False
 file_name = "cookie"
@@ -134,6 +137,21 @@ class shop(object):
         return True
         # print response.read()
 
+    def pre_checkout(self, url):
+        # post_data = urllib.urlencode(post)
+        req = Request(url)
+        response = self.opener.open(req)
+        self.cj.save(ignore_discard=True, ignore_expires=True)
+        has_cookie = True
+        for item in self.cj:
+            print('Name = ' + item.name)
+            print('Value = ' + item.value)
+        print("")
+        res = response.read().decode('utf-8')
+        print(str(time.time() - self.starttime) + "s cost")
+        print("end")
+        return quote(re.findall(r'<meta name="csrf-token" content="(.+?)"', res)[0])  #
+
     def checkout(self, url, post):
         # post_data = urllib.urlencode(post)
         req = Request(url, post.encode(encoding='UTF8'))
@@ -165,7 +183,11 @@ def alive():
 
 def start_bot():
     if cls_shop.getGoods():
-        cls_shop.checkout(checkout, check_post)
+        token = cls_shop.pre_checkout(checkout_url)
+        pattern = 'authenticity_token=(.*?)&'
+        check_auth_post = re.sub(pattern, "authenticity_token="+token+"&", check_post)
+        print(check_auth_post)
+        cls_shop.checkout(checkout_json__url, check_auth_post)
         bot.remove()
         thread.shutdown(wait=False)
         files = {'myFile': (
@@ -177,13 +199,14 @@ def start_bot():
 
 
 if __name__ == '__main__':
-    index = "2"
+    index = "4"
     info = "http://1.surpreme.applinzi.com/" + index
     print(index)
     cls_shop = shop()
     response = cls_shop.getInfo()
-    response='{"commit":"utf8=%E2%9C%93&authenticity_token=4MQjlQA4jdqqXo066lz5DMuSjCtP14BGg61UN0dvLFQrgswAmPZLZSHK45%2F%2FJKAPS6uoT4lHam%2BtVwP95omzZQ%3D%3D&credit_card%5Blast_name%5D=hu&credit_card%5Bfirst_name%5D=yang&order%5Bemail%5D=h924429615%40gmail.com&order%5Btel%5D=09012592053&order%5Bbilling_state%5D=+%E6%9D%B1%E4%BA%AC%E9%83%BD&order%5Bbilling_city%5D=%E6%9D%B1%E4%BA%AC%E9%83%BD&order%5Bbilling_address%5D=%E6%9D%BF%E6%A9%8B%E5%8C%BA%E5%A4%A7%E8%B0%B7%E5%8F%A3%E5%8C%97%E7%94%BA18-3%E3%83%A1%E3%82%BE%E3%83%B3202&order%5Bbilling_zip%5D=173-0031&same_as_billing_address=1&credit_card%5Btype%5D=cod&credit_card%5Bcnb%5D=aaa&credit_card%5Bmonth%5D=01&credit_card%5Byear%5D=2022&credit_card%5Bvval%5D=a&order%5Bterms%5D=0&order%5Bterms%5D=1&hpcvv=","isValid":1,"time":"2017-12-16 10:59:45","goods":[{"category":"Accessories","name":["Crew Socks"]}]}'
+    # response = '{"commit":"utf8=%E2%9C%93&authenticity_token=CHcaHKo5H2t238nknlp2%2B%2Bi%2F7WcYQ3JqZmr%2BNrsdI7XDMfWJMvfZ1P1Lp0GLIi%2F4aIbJA97TmENIkKn8Gvu8hA%3D%3D&credit_card%5Blast_name%5D=wang&credit_card%5Bfirst_name%5D=jiarui&order%5Bemail%5D=1198222311%40qq.com&order%5Btel%5D=09098229503&order%5Bbilling_state%5D=+%E6%9D%B1%E4%BA%AC%E9%83%BD&order%5Bbilling_city%5D=%E6%9D%B1%E4%BA%AC%E9%83%BD&order%5Bbilling_address%5D=%E6%9D%B1%E4%BA%AC%E9%83%BD%E6%96%B0%E5%AE%BF%E5%8C%BA%E4%B8%8A%E8%90%BD%E5%90%881-15-12Imagin%E4%B8%8B%E8%90%BD%E5%90%881-a&order%5Bbilling_zip%5D=161-0034&same_as_billing_address=1&credit_card%5Btype%5D=cod&credit_card%5Bcnb%5D=aq&credit_card%5Bmonth%5D=12&credit_card%5Byear%5D=2024&credit_card%5Bvval%5D=a&order%5Bterms%5D=0&order%5Bterms%5D=1&hpcvv=","isValid":1,"time":"2017-12-16 10:59:45","goods":[{"category":"Accessories","name":["Crew Socks"]}]}'
     j = json.loads(response)
+    print(j)
     upload_file_name = index
     file = open(upload_file_name, 'w')
     print(j)
