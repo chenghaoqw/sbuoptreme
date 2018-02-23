@@ -167,7 +167,8 @@ class shop(object):
 
     def checkout(self, url, post):
         # post_data = urllib.urlencode(post)
-        ck = cookiejar.Cookie(version=0, name='lastid', value='1513704371715', port=None, port_specified=False,
+        nowTime = lambda: int(round(time.time() * 1000))
+        ck = cookiejar.Cookie(version=0, name='lastid', value=str(nowTime), port=None, port_specified=False,
                               domain='www.abc.cn', domain_specified=False, domain_initial_dot=False, path='/',
                               path_specified=True, secure=False, expires=None, discard=True, comment=None,
                               comment_url=None, rest={'HttpOnly': None}, rfc2109=False)
@@ -247,5 +248,5 @@ if __name__ == '__main__':
                                    seconds=6))
     alive = thread.add_job(alive, alivetrigger)
     bottrigger = CronTrigger(start_date=datetime.datetime.strptime(starttime, '%Y-%m-%d %H:%M:%S'))
-    bot = thread.add_job(start_bot, bottrigger)
+    bot = thread.add_job(start_bot, bottrigger, max_instances=10)
     thread.start()
