@@ -1,4 +1,6 @@
+# coding:utf-8
 import json
+import ssl
 from http import cookiejar
 from urllib.parse import urlencode
 from urllib.request import HTTPCookieProcessor, build_opener, Request
@@ -14,13 +16,18 @@ SHOP_URL = "http://www.supremenewyork.com/shop/"
 CHECKOUT_URL = "https://www.supremenewyork.com/checkout.json"
 upload_file_name = index
 
+ssl._create_default_https_context = ssl._create_unverified_context
+
 
 class netWork(object):
     COOKIE_NAME = "cookie"
 
     def __init__(self):
-        self.cj = cookiejar.MozillaCookieJar(netWork.COOKIE_NAME)
-        self.cj.load(netWork.COOKIE_NAME, ignore_discard=True, ignore_expires=True)
+        try:
+            self.cj = cookiejar.MozillaCookieJar(netWork.COOKIE_NAME)
+            self.cj.load(netWork.COOKIE_NAME, ignore_discard=True, ignore_expires=True)
+        except FileNotFoundError:
+            print("cookie error")
         self.handler = HTTPCookieProcessor(self.cj)
         self.opener = build_opener(self.handler)
 
@@ -63,12 +70,9 @@ def start_bot():
 
     goods_usable = []
     for good_want in commit_info['goods']:
-        print(good_want)
         in_categroy = stock[good_want['category']]
-        print(in_categroy)
         for good in in_categroy:
             for good_one in good_want['name']:
-                print(good_one)
                 if good_one in good['name']:
                     goods_usable.append(good)
 
