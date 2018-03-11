@@ -1,9 +1,8 @@
 # coding:utf-8
 import json
 import ssl
-from http import cookiejar
+import requests
 from urllib.parse import urlencode
-from urllib.request import HTTPCookieProcessor, build_opener, Request
 
 import sys
 
@@ -23,33 +22,24 @@ class netWork(object):
     COOKIE_NAME = "cookie"
 
     def __init__(self):
-        try:
-            self.cj = cookiejar.MozillaCookieJar(netWork.COOKIE_NAME)
-            self.cj.load(netWork.COOKIE_NAME, ignore_discard=True, ignore_expires=True)
-        except FileNotFoundError:
-            print("cookie error")
-        self.handler = HTTPCookieProcessor(self.cj)
-        self.opener = build_opener(self.handler)
+        self.http = requests.Session()
 
     def get_application_info(self):
-        req = Request(INFO_URL, method="GET")
-        response = self.opener.open(req)
-        response = response.read().decode('utf-8')
+        # req = self.http.request( method="GET", url=INFO_URL)
+        response = self.http.post(INFO_URL)
+        response = response.content.decode('utf-8')
+        self.http.cookies.set("sss", "sss")
+        print(self.http.cookies)
         return json.loads(response)
 
     def get_stock(self):
-        req = Request(STOCK_URL + str(int(time.time())), method="GET")
-        req.add_header("User-Agent",
-                       "Mozilla/5.0 (iPhone; CPU iPhone OS 10_2 like Mac OS X) AppleWebKit/602.3.12 (KHTML, like Gecko) Mobile/14C92 MicroMessenger/6.5.9 NetType/WIFI Language/zh_CN")
-        response = self.opener.open(req)
-        response = response.read().decode('utf-8')
+        response = self.http.get(STOCK_URL + str(int(time.time())))
+        response = response.content.decode('utf-8')
         return json.loads(response)['products_and_categories']
 
     def get_good_postdata(self, gid):
-        req = Request(SHOP_URL + str(gid) + ".json", method="GET")
-        response = self.opener.open(req)
-        response = response.read().decode('utf-8')
-        return json.loads(response)['styles']
+        response = self.http.get(SHOP_URL + str(gid) + ".json")
+        return response.json()['styles']
 
     def add_good_cart(self, gid, post):
         headers = {
@@ -59,19 +49,18 @@ class netWork(object):
             # "X-CSRF-Token": "ItGGEPpERDbLPHwptPxybPfyI9a8OgVs27p/ylDw0qp9UMbc3wdXM3KRESfO9BhHEBlcqOfVxF3bhELRrVNT+w==",
             # "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.186 Safari/537.36",
             # "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "Set-Cookie": "ss=sss;path=/;expires=Mon, 12 Mar 2018 13:23:53 -0000",
             "Accept": "*/*;q=0.5, text/javascript, application/javascript, application/ecmascript, application/x-ecmascript",
             "X-Requested-With": "XMLHttpRequest",
             # "Referer": "http://www.supremenewyork.com/shop/accessories/qnhaqotsg",
             # "Accept-Encoding": "gzip, deflate",
         }
-        req = Request(SHOP_URL + str(gid) + "/add", post.encode(encoding='UTF8'), headers=headers)
-        response = self.opener.open(req)
-        result = response.read().decode('utf-8')
+        response = self.http.post(SHOP_URL + str(gid) + "/add", data=post.encode(encoding='UTF8'), headers=headers)
+        result = response.content.decode('utf-8')
 
     def check_out(self, post):
-        req = Request(CHECKOUT_URL, post.encode(encoding='UTF8'))
-        response = self.opener.open(req)
-        return response.read().decode('utf-8')
+        response = self.http.post(CHECKOUT_URL, data=post.encode(encoding='UTF8'))
+        return response.content.decode('utf-8')
 
 
 '''_________________________________________________________________________'''
@@ -111,8 +100,8 @@ def start_bot():
     for good_buy in goods_inventory:
         net.add_good_cart(good_buy['id'], good_buy['post_data'])
 
-        result = net.check_out(commit_info['commit'])
-        print(result)
+        # result = net.check_out(commit_info['commit'])
+        # print(result)
 
 
 '''_________________________________________________________________________'''
