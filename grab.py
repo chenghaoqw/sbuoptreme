@@ -14,7 +14,7 @@ INFO_URL = "http://1.surpreme.applinzi.com/" + str(index)
 STOCK_URL = "http://www.supremenewyork.com/mobile_stock.json?_="
 SHOP_URL = "http://www.supremenewyork.com/shop/"
 CHECKOUT_URL = "https://www.supremenewyork.com/checkout.json"
-upload_file_name = index
+upload_file_name = index + time.time()
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -52,9 +52,21 @@ class netWork(object):
         return json.loads(response)['styles']
 
     def add_good_cart(self, gid, post):
-        req = Request(SHOP_URL + str(gid) + "/add", post.encode(encoding='UTF8'))
+        headers = {
+            # "Host": "www.supremenewyork.com",
+            # "Proxy-Connection": "keep-alive",
+            # "Origin": "http://www.supremenewyork.com",
+            # "X-CSRF-Token": "ItGGEPpERDbLPHwptPxybPfyI9a8OgVs27p/ylDw0qp9UMbc3wdXM3KRESfO9BhHEBlcqOfVxF3bhELRrVNT+w==",
+            # "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.186 Safari/537.36",
+            # "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "Accept": "*/*;q=0.5, text/javascript, application/javascript, application/ecmascript, application/x-ecmascript",
+            "X-Requested-With": "XMLHttpRequest",
+            # "Referer": "http://www.supremenewyork.com/shop/accessories/qnhaqotsg",
+            # "Accept-Encoding": "gzip, deflate",
+        }
+        req = Request(SHOP_URL + str(gid) + "/add", post.encode(encoding='UTF8'), headers=headers)
         response = self.opener.open(req)
-        self.cj.save(ignore_discard=True, ignore_expires=True)
+        result = response.read().decode('utf-8')
 
     def check_out(self, post):
         req = Request(CHECKOUT_URL, post.encode(encoding='UTF8'))
@@ -93,11 +105,14 @@ def start_bot():
                     good_inventory['id'] = good_valid['id']
                     goods_inventory.append(good_inventory)
 
+    if not any(goods_inventory):  # no good can buy
+        return
+
     for good_buy in goods_inventory:
         net.add_good_cart(good_buy['id'], good_buy['post_data'])
 
-    result = net.check_out(commit_info['commit'])
-    print(result)
+        result = net.check_out(commit_info['commit'])
+        print(result)
 
 
 '''_________________________________________________________________________'''
